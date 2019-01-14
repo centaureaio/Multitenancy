@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
 using Moq;
 using Xunit;
 
@@ -16,7 +17,8 @@ namespace Centaurea.Multitenancy.Test
             appMock.Setup(app => app.UseMiddleware(It.IsAny<Type>(), It.IsAny<MultitenantMappingConfiguration>()))
                 .Verifiable();
 
-            appMock.Object.UseMultitenancy(MultitenantMappingConfiguration.FromDictionary(new Dictionary<string, string> { { "Test", "testhost.com" } }));
+            appMock.Object.UseMultitenancy(MultitenantMappingConfiguration.FromDictionary(new Dictionary<string, string>
+                {{"Test", "testhost.com"}}));
             appMock.Verify(app =>
                 app.UseMiddleware(It.IsAny<Type>(), It.IsAny<MultitenantMappingConfiguration>()), Times.Once());
         }

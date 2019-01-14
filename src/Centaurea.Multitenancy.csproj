@@ -1,6 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.0.1</Version>
+    <Company>Centaurea (https://centaurea.io)</Company>
+    <Description>Lightweight, minimalistic multitenant extension at the top of ASP.NET CORE MVC platform</Description>
+    <Copyright>Centaurea</Copyright>
+    <PackageLicenseUrl>https://github.com/centaurea/Multitenancy/blob/master/LICENSE.md</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/centaurea/Multitenancy</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/centaurea/Multitenancy</RepositoryUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageIconUrl>https://avatars0.githubusercontent.com/u/19929833?s=460&amp;v=4</PackageIconUrl>
+    <PackageReleaseNotes>alpha version, not ready for usage so far</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
