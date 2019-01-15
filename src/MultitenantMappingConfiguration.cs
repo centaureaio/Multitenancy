@@ -50,8 +50,8 @@ namespace Centaurea.Multitenancy
 
         private static MultitenantMappingConfiguration BuildConfiguration(List<KeyValuePair<string, string>> items)
         {
-            Dictionary<TenantId, Regex> mapping = new Dictionary<TenantId, Regex>() {{new TenantId(), new Regex(".")}};
-
+            Dictionary<TenantId, Regex> mapping = new Dictionary<TenantId, Regex>{{new TenantId(), new Regex(".")}};
+            
             items?.ForEach(kv => mapping.Add(new TenantId(kv.Key), new Regex(kv.Value)));
             return new MultitenantMappingConfiguration(mapping);
         }

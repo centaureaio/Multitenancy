@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Centaurea.Multitenancy.Test
@@ -20,7 +21,6 @@ namespace Centaurea.Multitenancy.Test
             appMock.Verify(app => app.Use(It.IsAny<Func<RequestDelegate, RequestDelegate>>()), Times.Once());
         }
 
-
         [Theory]
         [InlineData("google.com", TenantId.DEFAULT)]
         [InlineData("", TenantId.DEFAULT)]
@@ -29,6 +29,23 @@ namespace Centaurea.Multitenancy.Test
         public async void TestMiddlewareCorrectlyDetectSimpleHostMatched(string host, string tenant)
         {
             Mock<IApplicationBuilder> appMock = InitAppMockWithMiddleware(DEFAULT_CFG);
+            await RunTenantDetectionCheck(host, tenant, appMock);
+        }
+        
+        [Theory]
+        [InlineData("www.google.com", "google", "^www")]
+        [InlineData("qwwwgoogle.com", "google", "^www", TenantId.DEFAULT)]
+        [InlineData("ww1.google.com", "google", "^www", TenantId.DEFAULT)]
+        [InlineData("googlewwww.com", "google", "^www", TenantId.DEFAULT)]
+        public async void TestMiddlewareDetectTennatBasedOnRegexp(string host, string tenant = null, string regex = null,
+            string expectedT = null)
+        {
+            Mock<IApplicationBuilder> appMock = InitAppMockWithMiddleware(new Dictionary<string, string>{{tenant, regex}});
+            await RunTenantDetectionCheck(host, tenant, appMock, expectedT);
+        }
+
+        private async Task RunTenantDetectionCheck(string host, string tenant, Mock<IApplicationBuilder> appMock, string expectedT = null)
+        {
             Dictionary<object, object> requestData = new Dictionary<object, object>();
 
             Mock<HttpContext> ctxMock = new Mock<HttpContext>();
@@ -39,11 +56,8 @@ namespace Centaurea.Multitenancy.Test
             await request.Invoke(ctxMock.Object);
 
             Assert.Single(requestData);
-            Assert.Contains(new TenantId(tenant), requestData.Values);
+            Assert.Contains(new TenantId(expectedT ?? tenant), requestData.Values);
         }
-
-//        [Fact]
-//        public async
 
         private Mock<HttpRequest> GetMockedRequest(string host = "www.site.com")
         {
@@ -57,7 +71,8 @@ namespace Centaurea.Multitenancy.Test
             Mock<IApplicationBuilder> appMock = new Mock<IApplicationBuilder>();
             MultitenantMappingConfiguration config = MultitenantMappingConfiguration.FromDictionary(middlewareConfig);
             appMock.Object.UseMultitenancy(config);
-            appMock.Setup(app => app.Build()).Returns(ctx => new TenantDetectorMiddleware(null, config).InvokeAsync(ctx));
+            appMock.Setup(app => app.Build())
+                .Returns(ctx => new TenantDetectorMiddleware(null, config).InvokeAsync(ctx));
             return appMock;
         }
     }
