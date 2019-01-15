@@ -1,15 +1,21 @@
 namespace Centaurea.Multitenancy
 {
-    public struct TenantId
+    public class TenantId
     {
-        private readonly string _id;
+        public override bool Equals(object obj) => obj is TenantId tenantId && _id.Equals(tenantId._id);
+        
+        public override int GetHashCode()
+        {
+            return (_id != null ? _id.GetHashCode() : 0);
+        }
+        
+        private readonly string _id = DEFAULT;
 
         public TenantId(string id = DEFAULT)
         {
-            this._id = id;
+            _id = id;
         }
-
-
+        
         public const string DEFAULT = "default";
     }
 }

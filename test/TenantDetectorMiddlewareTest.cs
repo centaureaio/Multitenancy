@@ -1,26 +1,64 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Moq;
+using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Centaurea.Multitenancy.Test
 {
     public class TenantDetectorMiddlewareTest
     {
+        private static readonly Dictionary<string, string> DEFAULT_CFG = new Dictionary<string, string>
+            {{"Test", "testhost.com"}};
+
         [Fact]
         public void TestMiddlewareActivationExtension()
         {
-            var appMock = new Mock<IApplicationBuilder>();
-            appMock.Setup(app => app.UseMiddleware(It.IsAny<Type>(), It.IsAny<MultitenantMappingConfiguration>()))
-                .Verifiable();
+            Mock<IApplicationBuilder> appMock = InitAppMockWithMiddleware(DEFAULT_CFG);
 
-            appMock.Object.UseMultitenancy(MultitenantMappingConfiguration.FromDictionary(new Dictionary<string, string>
-                {{"Test", "testhost.com"}}));
-            appMock.Verify(app =>
-                app.UseMiddleware(It.IsAny<Type>(), It.IsAny<MultitenantMappingConfiguration>()), Times.Once());
+            appMock.Verify(app => app.Use(It.IsAny<Func<RequestDelegate, RequestDelegate>>()), Times.Once());
+        }
+
+
+        [Theory]
+        [InlineData("google.com", TenantId.DEFAULT)]
+        [InlineData("", TenantId.DEFAULT)]
+        [InlineData(null, TenantId.DEFAULT)]
+        [InlineData("testhost.com", "Test")]
+        public async void TestMiddlewareCorrectlyDetectSimpleHostMatched(string host, string tenant)
+        {
+            Mock<IApplicationBuilder> appMock = InitAppMockWithMiddleware(DEFAULT_CFG);
+            Dictionary<object, object> requestData = new Dictionary<object, object>();
+
+            Mock<HttpContext> ctxMock = new Mock<HttpContext>();
+            ctxMock.Setup(httpContext => httpContext.Request).Returns(GetMockedRequest(host).Object);
+            ctxMock.Setup(ctx => ctx.Items).Returns(requestData);
+
+            RequestDelegate request = appMock.Object.Build();
+            await request.Invoke(ctxMock.Object);
+
+            Assert.Single(requestData);
+            Assert.Contains(new TenantId(tenant), requestData.Values);
+        }
+
+//        [Fact]
+//        public async
+
+        private Mock<HttpRequest> GetMockedRequest(string host = "www.site.com")
+        {
+            Mock<HttpRequest> requestMock = new Mock<HttpRequest>();
+            requestMock.Setup(r => r.Host).Returns(new HostString(host));
+            return requestMock;
+        }
+
+        private Mock<IApplicationBuilder> InitAppMockWithMiddleware(Dictionary<string, string> middlewareConfig)
+        {
+            Mock<IApplicationBuilder> appMock = new Mock<IApplicationBuilder>();
+            MultitenantMappingConfiguration config = MultitenantMappingConfiguration.FromDictionary(middlewareConfig);
+            appMock.Object.UseMultitenancy(config);
+            appMock.Setup(app => app.Build()).Returns(ctx => new TenantDetectorMiddleware(null, config).InvokeAsync(ctx));
+            return appMock;
         }
     }
 }
