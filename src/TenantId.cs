@@ -17,5 +17,6 @@ namespace Centaurea.Multitenancy
         }
         
         public const string DEFAULT = "default";
+        public static readonly TenantId DEFAULT_ID = new TenantId();
     }
 }

@@ -16,6 +16,6 @@ namespace Centaurea.Multitenancy
             _ctx = context;
         }
 
-        public TenantId Current => (TenantId)_ctx.HttpContext.Items[Constants.TENANT_CONTEXT_KEY];
+        public TenantId Current => (TenantId)(_ctx.HttpContext?.Items[Constants.TENANT_CONTEXT_KEY] ?? TenantId.DEFAULT_ID);
     }
 }

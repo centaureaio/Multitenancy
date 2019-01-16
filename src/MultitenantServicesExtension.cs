@@ -5,9 +5,9 @@ namespace Centaurea.Multitenancy
 {
     public static class MultitenantServicesExtension
     {
-        public static void AddMultitenantDi(this IServiceCollection services)
+        public static void ActivateMultitenancy(this IServiceCollection services)
         {
-            services.AddSingleton<MultitenantTypeRegister>();
+            services.AddSingleton<ITenantResolver, DefaultTenantResolver>();
         }
 
         public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services)
