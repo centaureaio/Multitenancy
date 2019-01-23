@@ -24,5 +24,10 @@ namespace Centaurea.Multitenancy
 
             return attrs.FirstOrDefault().Section;
         }
+
+        public static string ReadSectionPath<T>()
+        {
+            return ReadSectionPath(typeof(T));
+        }
     }
 }

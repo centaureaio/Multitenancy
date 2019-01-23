@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,8 +14,7 @@ namespace Centaurea.Multitenancy
             services.AddSingleton<ITenantResolver, DefaultTenantResolver>();
             services.Remove(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(OptionsManager<>)));
             services.Remove(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(OptionsManager<>)));
-
-
+            
             services.TryAdd(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(TenantOptionsManager<>)));
             services.TryAdd(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(TenantOptionsManager<>)));
         }
