@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Moq;
@@ -30,6 +31,17 @@ namespace Centaurea.Multitenancy.Test
             appMock.Setup(app => app.Build())
                 .Returns(ctx => new TenantDetectorMiddleware(null, config).InvokeAsync(ctx));
             return appMock;
+        }
+
+        protected async Task<TenantDetectorMiddleware> EmulateRequestExecution(Mock<IHttpContextAccessor> accessor, string host, string tenantId, string tenantRegexp)
+        {
+            Mock<HttpContext> ctx = GetHttpContextMock(host, new Dictionary<object, object>());
+            accessor.Setup(acc => acc.HttpContext).Returns(ctx.Object);
+
+            TenantDetectorMiddleware detector = new TenantDetectorMiddleware(null,
+                MultitenantMappingConfiguration.FromDictionary(new Dictionary<string, string> {{tenantId, tenantRegexp}}));
+            await detector.InvokeAsync(ctx.Object);
+            return detector;
         }
     }
 }

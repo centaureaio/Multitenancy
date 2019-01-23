@@ -1,7 +1,11 @@
-﻿namespace Centaurea.Multitenancy
+﻿using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Centaurea.Multitenancy.Test")]
+namespace Centaurea.Multitenancy
 {
-    class Constants
+    internal class Constants
     {
-        public const string TENANT_CONTEXT_KEY = "tenant_name_for_context";
+       internal const string TENANT_CONF_KEY = "tenants";
+       internal const string TENANT_CONTEXT_KEY = "tenant_name_for_context";
     }
 }

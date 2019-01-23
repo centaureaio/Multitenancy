@@ -6,7 +6,8 @@ using System.Reflection.Emit;
 
 namespace Centaurea.Multitenancy
 {
-    internal static class MultitenantTypeDescriptor
+    [Obsolete]
+    static class MultitenantTypeDescriptor
     {
         static readonly ConcurrentDictionary<KeyValuePair<Type, TenantId>, Type> _typeCache =
             new ConcurrentDictionary<KeyValuePair<Type, TenantId>, Type>();

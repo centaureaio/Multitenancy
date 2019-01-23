@@ -3,23 +3,38 @@ using Moq;
 using Xunit;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
 namespace Centaurea.Multitenancy.Test
 {
-    public class AddTenantRelatedServiceTest : BaseTest
+    public class TenantedServicesdAddOrGetTest : BaseTest
     {
-        interface IFake { };
-        class Fake : IFake { };
+        interface IFake
+        {
+        };
 
-        class FakeChild : Fake { };
+        class Fake : IFake
+        {
+        };
 
-        class TenantFake : IFake { };
+        class TenantFake : IFake
+        {
+        };
+
+        class Dep
+        {
+            public Dep(IFake fake)
+            {
+                Faked = fake;
+            }
+
+            public IFake Faked { get; set; }
+        }
+
         private IServiceCollection _services;
 
-        private TenantId testTenant = new TenantId("test");
-
-        public AddTenantRelatedServiceTest()
+        public TenantedServicesdAddOrGetTest()
         {
             _services = new ServiceCollection();
         }
@@ -69,27 +84,30 @@ namespace Centaurea.Multitenancy.Test
             string ya = "yahoo";
             _services.ActivateMultitenancy();
             _services.AddScoped<IFake, Fake>();
+            _services.AddScoped<Fake>();
+            _services.AddScoped<Dep>();
             _services.AddScopedForTenant<IFake, TenantFake>(new TenantId(ya));
             Mock<IHttpContextAccessor> accessor = new Mock<IHttpContextAccessor>();
             _services.AddSingleton(accessor.Object);
             IServiceProvider serviceProvider = _services.BuildMultitenantServiceProvider();
 
-            Mock<HttpContext> ctx = GetHttpContextMock("google.com", new Dictionary<object, object>());
-            accessor.Setup(acc => acc.HttpContext).Returns(ctx.Object);
-
-            TenantDetectorMiddleware detector = new TenantDetectorMiddleware(null,
-                MultitenantMappingConfiguration.FromDictionary(new Dictionary<string, string> {{ya, "yahoo"}}));
-            await detector.InvokeAsync(ctx.Object);
+            await EmulateRequestExecution(accessor, "google.com", ya, "yahoo");
 
             IFake service = serviceProvider.GetService<IFake>();
-            Assert.Equal(typeof(Fake),service.GetType());
+            Assert.Equal(typeof(Fake), service.GetType());
 
-            ctx = GetHttpContextMock("yahoo.com", new Dictionary<object, object>());
-            accessor.Setup(acc => acc.HttpContext).Returns(ctx.Object);
-            await detector.InvokeAsync(ctx.Object);
+            Dep dep = serviceProvider.GetService<Dep>();
+            Assert.Equal(typeof(Fake), dep.Faked.GetType());
+
+            await EmulateRequestExecution(accessor, "yahoo.com", ya, "yahoo");
             service = serviceProvider.GetService<IFake>();
+            Fake notOverridenByScopeService = serviceProvider.GetService<Fake>();
             Assert.Equal(typeof(TenantFake), service.GetType());
+            Assert.NotNull(notOverridenByScopeService);
+            dep = serviceProvider.GetService<Dep>();
+            Assert.Equal(typeof(TenantFake), dep.Faked.GetType());
         }
+         
 
         //TODO:Add unit tests for transient and singleton registered services
     }
