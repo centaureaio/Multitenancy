@@ -16,4 +16,6 @@ Lib assumed that tenants have json configuration with following structure
     }
 
 
+or any other configuration format who could provide following keys for settings
 
+`tenants:<TenantName>:<ActualConfig>`
