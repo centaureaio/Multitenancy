@@ -9,7 +9,7 @@ namespace Centaurea.Multitenancy
 {
     public static class MultitenantServicesExtension
     {
-        public static void ActivateMultitenancy(this IServiceCollection services)
+        internal static void ActivateMultitenancy(this IServiceCollection services)
         {
             services.AddSingleton<ITenantResolver, DefaultTenantResolver>();
             services.Remove(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(OptionsManager<>)));

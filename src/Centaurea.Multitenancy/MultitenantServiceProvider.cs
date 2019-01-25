@@ -28,6 +28,7 @@ namespace Centaurea.Multitenancy
 
         internal static Dictionary<TenantId, IServiceCollection> InitProviderCollections(IServiceCollection services)
         {
+            services.ActivateMultitenancy();
             Dictionary<TenantId, IServiceCollection> result = new Dictionary<TenantId, IServiceCollection>();
             IEnumerable<TenantedServiceDescriptor> tenantedServices = services.Where(d => d is TenantedServiceDescriptor td && !td.Tenant.Equals(TenantId.DEFAULT_ID))
                 .Cast<TenantedServiceDescriptor>().ToArray();
