@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Centaurea.Multitenancy.csproj" />
+    <ProjectReference Include="..\src\Centaurea.Multitenancy\Centaurea.Multitenancy.csproj" />
   </ItemGroup>
 
 </Project>

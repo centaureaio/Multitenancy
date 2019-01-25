@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Centaurea.Multitenancy.Annotation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;

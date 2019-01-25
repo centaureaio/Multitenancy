@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Centaurea.Multitenancy
+namespace Centaurea.Multitenancy.Annotation
 {
     public class ConfigAttribute : Attribute
     {

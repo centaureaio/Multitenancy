@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyVersion>0.0.1.1</AssemblyVersion>
+    <FileVersion>0.0.1.1</FileVersion>
+    <Version>0.0.1.1</Version>
+    <Description>Configuration helper annotation to support Centaurea.Multitenancy configuration</Description>
+    <Copyright>Centaurea Soft Ltd</Copyright>
+    <PackageLicenseUrl>https://github.com/centaurea/Multitenancy/blob/master/LICENSE.md</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/centaurea/Multitenancy</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/centaurea/Multitenancy</RepositoryUrl>
+    <PackageIconUrl>https://avatars0.githubusercontent.com/u/19929833?s=460&amp;v=4</PackageIconUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+</Project>
