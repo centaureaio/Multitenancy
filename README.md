@@ -23,3 +23,9 @@ Lib assumed that tenants have json configuration with following structure
 or any other configuration format who could provide following keys for settings
 
 `tenants:<TenantName>:<ActualConfig>`
+
+-------------------------------------------
+
+tenants configuration for json file should looks like this
+
+    `{"tenantName1":"regexpForHost1", "tenantName2":"regexpForHost2", ...}`
