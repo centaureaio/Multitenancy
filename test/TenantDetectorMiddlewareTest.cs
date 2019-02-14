@@ -4,6 +4,7 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Centaurea.Multitenancy.Annotation;
 using Xunit;
 
 namespace Centaurea.Multitenancy.Test
@@ -11,8 +12,7 @@ namespace Centaurea.Multitenancy.Test
     public class TenantDetectorMiddlewareTest : BaseTest
 
     {
-        private static readonly Dictionary<string, string> DEFAULT_CFG = new Dictionary<string, string>
-            {{"Test", "testhost.com"}};
+        private static readonly Dictionary<string, string> DEFAULT_CFG = new Dictionary<string, string>{{"Test", "testhost.com"}};
 
         [Fact]
         public void TestMiddlewareActivationExtension()

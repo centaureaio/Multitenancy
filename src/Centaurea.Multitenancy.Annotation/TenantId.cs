@@ -1,4 +1,4 @@
-namespace Centaurea.Multitenancy
+namespace Centaurea.Multitenancy.Annotation
 {
     public class TenantId
     {

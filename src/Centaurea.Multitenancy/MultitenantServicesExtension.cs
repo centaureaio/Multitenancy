@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Centaurea.Multitenancy.Annotation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -9,33 +10,32 @@ namespace Centaurea.Multitenancy
 {
     public static class MultitenantServicesExtension
     {
-        internal static void ActivateMultitenancy(this IServiceCollection services)
+        internal static void ActivateMultitenancy(this IServiceCollection services, ITenantConfiguration tenantConfig)
         {
+            services.AddSingleton(tenantConfig);
             services.AddSingleton<ITenantResolver, DefaultTenantResolver>();
-            services.Remove(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(OptionsManager<>)));
-            services.Remove(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(OptionsManager<>)));
             
-            services.TryAdd(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(TenantOptionsManager<>)));
-            services.TryAdd(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(TenantOptionsManager<>)));
+            services.Replace(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(TenantOptionsManager<>)));
+            services.Replace(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(TenantOptionsManager<>)));
         }
 
-        public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services)
+        public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services, ITenantConfiguration tenantConfig)
         {
-            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services)
+            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, tenantConfig)
                 .ToDictionary(kv => kv.Key, kv => (IServiceProvider) kv.Value.BuildServiceProvider()));
         }
 
         public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services,
-            bool validateScopes)
+            bool validateScopes, ITenantConfiguration tenantConfig)
         {
-            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services)
+            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, tenantConfig)
                 .ToDictionary(kv => kv.Key, kv => (IServiceProvider) kv.Value.BuildServiceProvider(validateScopes)));
         }
 
         public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services,
-            ServiceProviderOptions opts)
+            ServiceProviderOptions opts, ITenantConfiguration tenantConfig)
         {
-            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services)
+            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, tenantConfig)
                 .ToDictionary(kv => kv.Key, kv => (IServiceProvider) kv.Value.BuildServiceProvider(opts)));
         }
 

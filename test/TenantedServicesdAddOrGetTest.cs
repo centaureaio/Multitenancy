@@ -4,6 +4,7 @@ using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Centaurea.Multitenancy.Annotation;
 using Microsoft.AspNetCore.Http;
 
 namespace Centaurea.Multitenancy.Test
@@ -42,7 +43,7 @@ namespace Centaurea.Multitenancy.Test
         [Fact]
         public void TestMultitenancyDepsAdding()
         {
-            _services.ActivateMultitenancy();
+            _services.ActivateMultitenancy(DefaultConfig);
             Assert.NotEmpty(_services);
         }
 
@@ -59,12 +60,11 @@ namespace Centaurea.Multitenancy.Test
         [Fact]
         public void AddingDepToDefaultTenantRewriteRegular()
         {
-            _services.ActivateMultitenancy();
             _services.AddScoped<IFake, Fake>();
             _services.AddScopedForTenant<IFake, TenantFake>(new TenantId());
             _services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            IServiceProvider provider = _services.BuildMultitenantServiceProvider();
+            IServiceProvider provider = _services.BuildMultitenantServiceProvider(DefaultConfig);
             IFake result = provider.GetRequiredService<IFake>();
             Assert.Equal(typeof(TenantFake), result.GetType());
         }
@@ -82,16 +82,15 @@ namespace Centaurea.Multitenancy.Test
         public async void ResolveTenantScopedService()
         {
             string ya = "yahoo";
-            _services.ActivateMultitenancy();
             _services.AddScoped<IFake, Fake>();
             _services.AddScoped<Fake>();
             _services.AddScoped<Dep>();
             _services.AddScopedForTenant<IFake, TenantFake>(new TenantId(ya));
             Mock<IHttpContextAccessor> accessor = new Mock<IHttpContextAccessor>();
             _services.AddSingleton(accessor.Object);
-            IServiceProvider serviceProvider = _services.BuildMultitenantServiceProvider();
+            IServiceProvider serviceProvider = _services.BuildMultitenantServiceProvider(GetTenantConfiguration((ya, ya)));
 
-            await EmulateRequestExecution(accessor, "google.com", ya, "yahoo");
+            await EmulateRequestExecution(accessor, "google.com", ya, ya);
 
             IFake service = serviceProvider.GetService<IFake>();
             Assert.Equal(typeof(Fake), service.GetType());

@@ -1,3 +1,4 @@
+using Centaurea.Multitenancy.Annotation;
 using Microsoft.AspNetCore.Http;
 
 namespace Centaurea.Multitenancy

@@ -18,7 +18,6 @@ namespace Centaurea.Multitenancy.Test
         public TenantOptionManagerTest()
         {
             _services = new ServiceCollection();
-            _services.ActivateMultitenancy();
         }
 
         [Config("Settings")]
@@ -47,10 +46,9 @@ namespace Centaurea.Multitenancy.Test
             _services.ConfigureTenants(config);
             _services.Configure<Settings>(config.GetSection(typeof(Settings).Name));
             Mock<IHttpContextAccessor> accessor = new Mock<IHttpContextAccessor>();
-            _services.AddSingleton<IHttpContextAccessor>(accessor.Object);
-            _services.ActivateMultitenancy();
+            _services.AddSingleton(accessor.Object);
             _services.AddScoped<Dep>();
-            IServiceProvider sp = _services.BuildMultitenantServiceProvider();
+            IServiceProvider sp = _services.BuildMultitenantServiceProvider(GetTenantConfiguration(("yahoo", "yahoo"), (tenant, tenant)));
 
             await EmulateRequestExecution(accessor, "google.com", "yahoo", "yahoo");
 

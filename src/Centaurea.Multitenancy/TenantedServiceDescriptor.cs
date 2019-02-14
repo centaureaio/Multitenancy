@@ -1,4 +1,5 @@
 ﻿using System;
+using Centaurea.Multitenancy.Annotation;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Centaurea.Multitenancy

@@ -4,9 +4,9 @@ namespace Centaurea.Multitenancy
 {
     public static class MultitenantAppExtension
     {
-        public static void UseMultitenancy(this IApplicationBuilder app, MultitenantMappingConfiguration config)
+        public static void UseMultitenancy(this IApplicationBuilder app)
         {
-            app.UseMiddleware<TenantDetectorMiddleware>(config);
+            app.UseMiddleware<TenantDetectorMiddleware>(app.ApplicationServices.GetService(typeof(ITenantConfiguration)));
         }
     }
 }

@@ -6,9 +6,9 @@ namespace Centaurea.Multitenancy
     public class TenantDetectorMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly MultitenantMappingConfiguration _cfg;
+        private readonly ITenantConfiguration _cfg;
 
-        public TenantDetectorMiddleware(RequestDelegate next, MultitenantMappingConfiguration configuration)
+        public TenantDetectorMiddleware(RequestDelegate next, ITenantConfiguration configuration)
         {
             _next = next;
             _cfg = configuration;
