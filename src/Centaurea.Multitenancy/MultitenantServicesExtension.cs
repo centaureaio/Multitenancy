@@ -13,7 +13,7 @@ namespace Centaurea.Multitenancy
         internal static void ActivateMultitenancy(this IServiceCollection services, ITenantConfiguration tenantConfig)
         {
             services.AddSingleton(tenantConfig);
-            services.AddSingleton<ITenantResolver, DefaultTenantResolver>();
+            services.TryAddSingleton(typeof(ITenantResolver), typeof(DefaultTenantResolver));
             
             services.Replace(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(TenantOptionsManager<>)));
             services.Replace(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(TenantOptionsManager<>)));
