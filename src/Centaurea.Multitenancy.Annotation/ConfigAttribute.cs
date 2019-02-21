@@ -19,7 +19,7 @@ namespace Centaurea.Multitenancy.Annotation
             IEnumerable<ConfigAttribute> attrs = type.GetCustomAttributes<ConfigAttribute>();
             if (attrs is null || !attrs.Any())
             {
-                throw new ArgumentException($"Configuration POCO object should be annotated with {typeof(ConfigAttribute).Name} attribute");
+                throw new ArgumentException($"Configuration POCO of type {type.FullName} object should be annotated with {typeof(ConfigAttribute).Name} attribute");
             }
 
             return attrs.FirstOrDefault().Section;

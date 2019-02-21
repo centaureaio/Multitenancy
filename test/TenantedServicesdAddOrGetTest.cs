@@ -88,7 +88,7 @@ namespace Centaurea.Multitenancy.Test
             _services.AddScopedForTenant<IFake, TenantFake>(new TenantId(ya));
             Mock<IHttpContextAccessor> accessor = new Mock<IHttpContextAccessor>();
             _services.AddSingleton(accessor.Object);
-            IServiceProvider serviceProvider = _services.BuildMultitenantServiceProvider(GetTenantConfiguration((ya, ya)));
+            IServiceProvider serviceProvider = _services.BuildMultitenantServiceProvider(GetTenantConfiguration(mapps: (ya, ya)));
 
             await EmulateRequestExecution(accessor, "google.com", ya, ya);
 

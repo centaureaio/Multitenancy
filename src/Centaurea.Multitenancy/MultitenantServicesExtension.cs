@@ -10,33 +10,34 @@ namespace Centaurea.Multitenancy
 {
     public static class MultitenantServicesExtension
     {
-        internal static void ActivateMultitenancy(this IServiceCollection services, ITenantConfiguration tenantConfig)
+        internal static void ActivateMultitenancy(this IServiceCollection services, MultitenancyConfiguration config)
         {
-            services.AddSingleton(tenantConfig);
+            services.ConfigureTenants(config.Config, config.ConfigKey);
+            services.AddSingleton(config.TenantConfiguration);
             services.TryAddSingleton(typeof(ITenantResolver), typeof(DefaultTenantResolver));
-            
+
             services.Replace(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(TenantOptionsManager<>)));
             services.Replace(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(TenantOptionsManager<>)));
         }
 
-        public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services, ITenantConfiguration tenantConfig)
+        public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services, MultitenancyConfiguration config)
         {
-            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, tenantConfig)
-                .ToDictionary(kv => kv.Key, kv => (IServiceProvider) kv.Value.BuildServiceProvider()));
+            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, config)
+                .ToDictionary(kv => kv.Key, kv => (IServiceProvider)kv.Value.BuildServiceProvider()));
         }
 
         public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services,
-            bool validateScopes, ITenantConfiguration tenantConfig)
+            bool validateScopes, MultitenancyConfiguration config)
         {
-            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, tenantConfig)
-                .ToDictionary(kv => kv.Key, kv => (IServiceProvider) kv.Value.BuildServiceProvider(validateScopes)));
+            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, config)
+                .ToDictionary(kv => kv.Key, kv => (IServiceProvider)kv.Value.BuildServiceProvider(validateScopes)));
         }
 
         public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services,
-            ServiceProviderOptions opts, ITenantConfiguration tenantConfig)
+            ServiceProviderOptions opts, MultitenancyConfiguration config)
         {
-            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, tenantConfig)
-                .ToDictionary(kv => kv.Key, kv => (IServiceProvider) kv.Value.BuildServiceProvider(opts)));
+            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, config)
+                .ToDictionary(kv => kv.Key, kv => (IServiceProvider)kv.Value.BuildServiceProvider(opts)));
         }
 
         public static void AddScopedForTenant(this IServiceCollection services, Type serviceType, TenantId tenantId)
@@ -108,9 +109,9 @@ namespace Centaurea.Multitenancy
             services.AddSingletonForTenant(typeof(TService), typeof(TImplementation), tenantId);
         }
 
-        public static void ConfigureTenants(this IServiceCollection services, IConfiguration config, string key = Constants.TENANT_CONF_KEY)
+        internal static void ConfigureTenants(this IServiceCollection services, IConfiguration config, string key = Constants.TENANT_CONF_KEY)
         {
-            services.AddSingleton(new TenantConfig{Config = config.GetSection(key)});
+            services.AddSingleton(new TenantConfig { Config = config.GetSection(key) });
         }
     }
 }

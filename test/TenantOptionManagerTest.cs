@@ -43,12 +43,11 @@ namespace Centaurea.Multitenancy.Test
             IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection(GetSettings(2, "abc"))
                 .AddInMemoryCollection(GetSettings(3, null).Select(kv => new KeyValuePair<string, string>($"{Constants.TENANT_CONF_KEY}:{tenant}:{kv.Key}", kv.Value))).Build();
 
-            _services.ConfigureTenants(config);
             _services.Configure<Settings>(config.GetSection(typeof(Settings).Name));
             Mock<IHttpContextAccessor> accessor = new Mock<IHttpContextAccessor>();
             _services.AddSingleton(accessor.Object);
             _services.AddScoped<Dep>();
-            IServiceProvider sp = _services.BuildMultitenantServiceProvider(GetTenantConfiguration(("yahoo", "yahoo"), (tenant, tenant)));
+            IServiceProvider sp = _services.BuildMultitenantServiceProvider(GetTenantConfiguration(config, ("yahoo", "yahoo"), (tenant, tenant)));
 
             await EmulateRequestExecution(accessor, "google.com", "yahoo", "yahoo");
 

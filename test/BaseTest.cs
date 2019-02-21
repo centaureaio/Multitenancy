@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Centaurea.Multitenancy.Annotation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 
@@ -30,14 +31,14 @@ namespace Centaurea.Multitenancy.Test
         protected Mock<IApplicationBuilder> InitAppMockWithMiddleware(Dictionary<string, string> middlewareConfig)
         {
             Mock<IApplicationBuilder> appMock = new Mock<IApplicationBuilder>();
-            MultitenantMappingConfiguration config = MultitenantMappingConfiguration.FromDictionary(middlewareConfig);
             ServiceCollection services = new ServiceCollection();
+            var tenantConf = GetTenantConfiguration(mapps: middlewareConfig.Select(p => (p.Key, p.Value)).ToArray());
             services.AddSingleton<IHttpContextAccessor>(new Mock<IHttpContextAccessor>().Object);
             appMock.Setup(app => app.ApplicationServices)
-                .Returns(services.BuildMultitenantServiceProvider(config));
+                .Returns(services.BuildMultitenantServiceProvider(tenantConf));
             appMock.Object.UseMultitenancy();
             appMock.Setup(app => app.Build())
-                .Returns(ctx => new TenantDetectorMiddleware(null, config).InvokeAsync(ctx));
+                .Returns(ctx => new TenantDetectorMiddleware(null, tenantConf.TenantConfiguration).InvokeAsync(ctx));
             return appMock;
         }
 
@@ -49,17 +50,20 @@ namespace Centaurea.Multitenancy.Test
 
             TenantDetectorMiddleware detector = new TenantDetectorMiddleware(null,
                 MultitenantMappingConfiguration.FromDictionary(
-                    new Dictionary<string, string> {{tenantId, tenantRegexp}}));
+                    new Dictionary<string, string> { { tenantId, tenantRegexp } }));
             await detector.InvokeAsync(ctx.Object);
             return detector;
         }
 
-        protected ITenantConfiguration DefaultConfig { get; set; } =
-            MultitenantMappingConfiguration.FromDictionary(new Dictionary<string, string>());
+        protected MultitenancyConfiguration DefaultConfig { get => GetTenantConfiguration(); }
 
-        protected ITenantConfiguration GetTenantConfiguration(params (string, string)[] mapps)
+        protected MultitenancyConfiguration GetTenantConfiguration(IConfiguration config = null, params (string, string)[] mapps)
         {
-            return MultitenantMappingConfiguration.FromDictionary(mapps.ToDictionary(t => t.Item1, t => t.Item2));
+            return new MultitenancyConfiguration
+            {
+                TenantConfiguration = MultitenantMappingConfiguration.FromDictionary(mapps.ToDictionary(t => t.Item1, t => t.Item2)),
+                Config = config ?? new Mock<IConfiguration>().Object
+            };
         }
     }
 }
