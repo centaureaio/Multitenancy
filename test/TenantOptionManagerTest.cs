@@ -21,7 +21,7 @@ namespace Centaurea.Multitenancy.Test
         }
 
         [Config("Settings")]
-        class Settings
+        class Settings : IMultitenantSetting
         {
             public int Number { get; set; }
             public string Str { get; set; }

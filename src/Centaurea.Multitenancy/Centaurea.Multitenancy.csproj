@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.0.1.9</Version>
+    <Version>0.0.1.22</Version>
     <Company>Centaurea (https://centaurea.io)</Company>
     <Description>Lightweight, minimalistic multitenant extension at the top of ASP.NET CORE MVC platform</Description>
     <Copyright>Centaurea</Copyright>
@@ -11,8 +11,8 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIconUrl>https://avatars0.githubusercontent.com/u/19929833?s=460&amp;v=4</PackageIconUrl>
     <PackageReleaseNotes>alpha version, not ready for usage so far</PackageReleaseNotes>
-    <AssemblyVersion>0.0.1.9</AssemblyVersion>
-    <FileVersion>0.0.1.9</FileVersion>
+    <AssemblyVersion>0.0.1.22</AssemblyVersion>
+    <FileVersion>0.0.1.22</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />

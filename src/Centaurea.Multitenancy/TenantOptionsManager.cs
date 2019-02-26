@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Centaurea.Multitenancy
 {
-    public class TenantOptionsManager<TOptions> : OptionsManager<TOptions> where TOptions : class, new()
+    public class TenantOptionsManager<TOptions> : OptionsManager<TOptions>, ITenantOptions<TOptions> where TOptions : class, new() 
     {
         private readonly ITenantResolver _resolver;
         private readonly TenantConfig _config;
@@ -28,7 +28,7 @@ namespace Centaurea.Multitenancy
                 {
                     TOptions result = base.Get(name); 
 
-                    if (!tenant.Equals(TenantId.DEFAULT_ID))
+                    if (!tenant.Equals(TenantId.DEFAULT_ID) && (typeof(IMultitenantSetting).IsAssignableFrom(typeof(TOptions))))
                     {
                         string tenantPath = $"{tenant}:{ConfigAttribute.ReadSectionPath(typeof(TOptions))}";
 
@@ -45,6 +45,10 @@ namespace Centaurea.Multitenancy
                     return result;
                 });
         }
+    }
+
+    public interface ITenantOptions<TOptions> : IOptions<TOptions> where TOptions : class,  new()
+    {
     }
 
     public class TenantConfig
