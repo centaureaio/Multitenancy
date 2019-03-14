@@ -7,14 +7,14 @@ using Newtonsoft.Json.Linq;
 
 namespace Centaurea.Multitenancy
 {
-    public class TenantOptionsManager<TOptions> : OptionsManager<TOptions>, ITenantOptions<TOptions> where TOptions : class, new() 
+    public class TenantOptionsManager<TOptions> : OptionsManager<TOptions>, ITenantOptions<TOptions> where TOptions : class, new()
     {
         private readonly ITenantResolver _resolver;
         private readonly TenantConfig _config;
-        
+
         private readonly ConcurrentDictionary<TenantId, TOptions> _cache =
             new ConcurrentDictionary<TenantId, TOptions>();
-        
+
         public TenantOptionsManager(IOptionsFactory<TOptions> factory, ITenantResolver resolver, TenantConfig config) : base(factory)
         {
             _resolver = resolver;
@@ -26,7 +26,7 @@ namespace Centaurea.Multitenancy
             return _cache.GetOrAdd(_resolver.Current,
                 tenant =>
                 {
-                    TOptions result = base.Get(name); 
+                    TOptions result = base.Get(name);
 
                     if (!tenant.Equals(TenantId.DEFAULT_ID) && (typeof(IMultitenantSetting).IsAssignableFrom(typeof(TOptions))))
                     {
@@ -38,7 +38,12 @@ namespace Centaurea.Multitenancy
                         JObject initial = JObject.FromObject(result);
                         JObject tenanted = JObject.FromObject(tenantOpts, JsonSerializer.Create(new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Ignore }));
 
-                        initial.Merge(tenanted);
+                        initial.Merge(tenanted, new JsonMergeSettings
+                        {
+                            MergeArrayHandling = MergeArrayHandling.Replace,
+                            MergeNullValueHandling = MergeNullValueHandling.Ignore,
+                            PropertyNameComparison = System.StringComparison.InvariantCultureIgnoreCase
+                        });
                         result = initial.ToObject<TOptions>();
                     }
 
@@ -47,7 +52,7 @@ namespace Centaurea.Multitenancy
         }
     }
 
-    public interface ITenantOptions<TOptions> : IOptions<TOptions> where TOptions : class,  new()
+    public interface ITenantOptions<TOptions> : IOptions<TOptions> where TOptions : class, new()
     {
     }
 
