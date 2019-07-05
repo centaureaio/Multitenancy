@@ -16,6 +16,7 @@ namespace Centaurea.Multitenancy
             services.AddSingleton(config.TenantConfiguration);
             services.TryAddSingleton(typeof(ITenantResolver), typeof(DefaultTenantResolver));
 
+            services.Replace(ServiceDescriptor.Singleton(typeof(IOptionsMonitorCache<>), typeof(TenantOptionsMonitorCache<>)));
             services.Replace(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(TenantOptionsManager<>)));
             services.Replace(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(TenantOptionsManager<>)));
         }
