@@ -7,8 +7,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Centaurea.Multitenancy
 {
-    public class MultitenantServiceProvider : IServiceProvider
+    public class MultitenantServiceProvider : IServiceProvider, IServiceScopeFactory
     {
+        private static readonly Type _scopeFactoryType = typeof(IServiceScopeFactory);
+
         private readonly ITenantResolver _tenantResolver;
 
         private readonly Dictionary<TenantId, IServiceProvider> _providers;
@@ -24,8 +26,22 @@ namespace Centaurea.Multitenancy
             _tenantResolver = (ITenantResolver)_providers[TenantId.DEFAULT_ID].GetService(typeof(ITenantResolver));
         }
 
-        public object GetService(Type serviceType) => (_providers.ContainsKey(_tenantResolver.Current) ?
-            _providers[_tenantResolver.Current] : _providers[TenantId.DEFAULT_ID]).GetService(serviceType);
+        internal IServiceProvider GetTenantedProvider(TenantId current)
+        {
+            return _providers.ContainsKey(current) ? _providers[current] :_providers[TenantId.DEFAULT_ID];
+        }
+
+        public object GetService(Type serviceType)
+        {
+            if (serviceType == _scopeFactoryType)
+            {
+                return this;
+            }
+
+            return (_providers.ContainsKey(_tenantResolver.Current)
+                ? _providers[_tenantResolver.Current]
+                : _providers[TenantId.DEFAULT_ID]).GetService(serviceType);
+        }
 
         internal static Dictionary<TenantId, IServiceCollection> InitProviderCollections(IServiceCollection services, MultitenancyConfiguration config)
         {
@@ -59,6 +75,11 @@ namespace Centaurea.Multitenancy
             }
             
             return result;
+        }
+
+        public IServiceScope CreateScope()
+        {
+            return GetTenantedProvider(_tenantResolver.Current).CreateScope();
         }
     }
 }

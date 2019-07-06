@@ -1,3 +1,6 @@
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Centaurea.Multitenancy")]
 namespace Centaurea.Multitenancy.Annotation
 {
     public class TenantId
@@ -23,5 +26,6 @@ namespace Centaurea.Multitenancy.Annotation
 
         public const string DEFAULT = "default";
         public static readonly TenantId DEFAULT_ID = new TenantId();
+        internal static readonly TenantId UNKNOWN = new TenantId("-1231241241209483102398102938124512548925825971");
     }
 }

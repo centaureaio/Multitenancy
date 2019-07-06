@@ -19,6 +19,11 @@ namespace Centaurea.Multitenancy
             services.Replace(ServiceDescriptor.Singleton(typeof(IOptionsMonitorCache<>), typeof(TenantOptionsMonitorCache<>)));
             services.Replace(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(TenantOptionsManager<>)));
             services.Replace(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(TenantOptionsManager<>)));
+
+            foreach (TenantId tenant in config.TenantConfiguration.GetAll().Except(new []{TenantId.DEFAULT_ID}))
+            {
+                services.AddScopedForTenant(typeof(ITenantResolver), typeof(CachedTenantResolver), tenant);
+            }
         }
 
         public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services, MultitenancyConfiguration config)

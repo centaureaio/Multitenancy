@@ -2,8 +2,6 @@
 using Moq;
 using Xunit;
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Centaurea.Multitenancy.Annotation;
 using Microsoft.AspNetCore.Http;
 
@@ -25,9 +23,12 @@ namespace Centaurea.Multitenancy.Test
 
         class Dep
         {
-            public Dep(IFake fake)
+            public ITenantResolver res;
+
+            public Dep(IFake fake, ITenantResolver resolver)
             {
                 Faked = fake;
+                res = resolver;
             }
 
             public IFake Faked { get; set; }
@@ -91,20 +92,35 @@ namespace Centaurea.Multitenancy.Test
             IServiceProvider serviceProvider = _services.BuildMultitenantServiceProvider(GetTenantConfiguration(mapps: (ya, ya)));
 
             await EmulateRequestExecution(accessor, "google.com", ya, ya);
-
             IFake service = serviceProvider.GetService<IFake>();
-            Assert.Equal(typeof(Fake), service.GetType());
-
             Dep dep = serviceProvider.GetService<Dep>();
-            Assert.Equal(typeof(Fake), dep.Faked.GetType());
+            Assert.Equal(typeof(DefaultTenantResolver), dep.res.GetType());
+
+            var fact = serviceProvider.GetService<IServiceScopeFactory>();
+      
+            using(var scope = serviceProvider.CreateScope()){
+                service = scope.ServiceProvider.GetService<IFake>();
+                Assert.Equal(typeof(Fake), service.GetType());
+                dep = scope.ServiceProvider.GetService<Dep>();
+                Assert.Equal(typeof(Fake), dep.Faked.GetType());
+            }
 
             await EmulateRequestExecution(accessor, "yahoo.com", ya, "yahoo");
-            service = serviceProvider.GetService<IFake>();
-            Fake notOverridenByScopeService = serviceProvider.GetService<Fake>();
-            Assert.Equal(typeof(TenantFake), service.GetType());
-            Assert.NotNull(notOverridenByScopeService);
-            dep = serviceProvider.GetService<Dep>();
-            Assert.Equal(typeof(TenantFake), dep.Faked.GetType());
+            using(var scope = serviceProvider.CreateScope()){
+                service = scope.ServiceProvider.GetService<IFake>();
+                Fake notOverridenByScopeService = serviceProvider.GetService<Fake>();
+                Assert.Equal(typeof(TenantFake), service.GetType());
+                Assert.NotNull(notOverridenByScopeService);
+                dep =  scope.ServiceProvider.GetService<Dep>();
+                Assert.Equal(typeof(TenantFake), dep.Faked.GetType());
+                Assert.Equal(typeof(CachedTenantResolver), dep.res.GetType());
+
+                using (var nestedScope = scope.ServiceProvider.CreateScope())
+                {
+                    service = nestedScope.ServiceProvider.GetService<IFake>();
+                    Assert.Equal(typeof(TenantFake), service.GetType());
+                }
+            }
         }
          
 
