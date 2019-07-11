@@ -10,40 +10,52 @@ namespace Centaurea.Multitenancy
 {
     public static class MultitenantServicesExtension
     {
-        internal static void ActivateMultitenancy(this IServiceCollection services, MultitenancyConfiguration config)
+        internal static void ActivateMultitenancy(this IServiceCollection services, MultitenancyConfiguration config, 
+            Func<IServiceProvider, IMultitenantServiceProvider> rootProviderGetter)
         {
             services.ConfigureTenants(config.Config, config.ConfigKey);
             services.AddSingleton(config.TenantConfiguration);
             services.TryAddSingleton(typeof(ITenantResolver), typeof(DefaultTenantResolver));
+            services.AddSingleton<IMultitenantServiceProvider>(rootProviderGetter);
+            services.AddSingleton<ITenantAmbientContext, TenantAmbientContextAccessor>();
 
             services.Replace(ServiceDescriptor.Singleton(typeof(IOptionsMonitorCache<>), typeof(TenantOptionsMonitorCache<>)));
             services.Replace(ServiceDescriptor.Singleton(typeof(IOptions<>), typeof(TenantOptionsManager<>)));
             services.Replace(ServiceDescriptor.Scoped(typeof(IOptionsSnapshot<>), typeof(TenantOptionsManager<>)));
 
-            foreach (TenantId tenant in config.TenantConfiguration.GetAll().Except(new []{TenantId.DEFAULT_ID}))
-            {
-                services.AddScopedForTenant(typeof(ITenantResolver), typeof(CachedTenantResolver), tenant);
-            }
+//            foreach (TenantId tenant in config.TenantConfiguration.GetAll().Except(new []{TenantId.DEFAULT_ID}))
+//            {
+//                services.AddScopedForTenant(typeof(ITenantResolver), typeof(CachedTenantResolver), tenant);
+//            }
         }
 
         public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services, MultitenancyConfiguration config)
         {
-            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, config)
-                .ToDictionary(kv => kv.Key, kv => (IServiceProvider)kv.Value.BuildServiceProvider()));
+            return BuildProvider(getter => new MultitenantServiceProvider(
+                MultitenantServiceProvider.InitProviderCollections(services, config, getter)
+                    .ToDictionary(kv => kv.Key, kv => (IServiceProvider)kv.Value.BuildServiceProvider())));
         }
 
         public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services,
             bool validateScopes, MultitenancyConfiguration config)
         {
-            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, config)
-                .ToDictionary(kv => kv.Key, kv => (IServiceProvider)kv.Value.BuildServiceProvider(validateScopes)));
+            return BuildProvider(getter => new MultitenantServiceProvider(MultitenantServiceProvider
+                .InitProviderCollections(services, config, getter)
+                .ToDictionary(kv => kv.Key, kv => (IServiceProvider) kv.Value.BuildServiceProvider(validateScopes))));
         }
 
         public static IServiceProvider BuildMultitenantServiceProvider(this IServiceCollection services,
             ServiceProviderOptions opts, MultitenancyConfiguration config)
         {
-            return new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, config)
-                .ToDictionary(kv => kv.Key, kv => (IServiceProvider)kv.Value.BuildServiceProvider(opts)));
+            return BuildProvider(getter => new MultitenantServiceProvider(MultitenantServiceProvider.InitProviderCollections(services, config, getter)
+                .ToDictionary(kv => kv.Key, kv => (IServiceProvider)kv.Value.BuildServiceProvider(opts))));
+        }
+
+        private static IMultitenantServiceProvider BuildProvider(Func<Func<IServiceProvider, IMultitenantServiceProvider>, MultitenantServiceProvider> builder)
+        {
+            IMultitenantServiceProvider rootProvider = null;
+            rootProvider = builder(p => rootProvider);
+            return rootProvider;
         }
 
         public static void AddScopedForTenant(this IServiceCollection services, Type serviceType, TenantId tenantId)

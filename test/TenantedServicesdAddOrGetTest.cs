@@ -24,11 +24,13 @@ namespace Centaurea.Multitenancy.Test
         class Dep
         {
             public ITenantResolver res;
+            public IServiceProvider prov;
 
-            public Dep(IFake fake, ITenantResolver resolver)
+            public Dep(IFake fake, ITenantResolver resolver, IServiceProvider provider)
             {
                 Faked = fake;
                 res = resolver;
+                prov = provider;
             }
 
             public IFake Faked { get; set; }
@@ -44,7 +46,7 @@ namespace Centaurea.Multitenancy.Test
         [Fact]
         public void TestMultitenancyDepsAdding()
         {
-            _services.ActivateMultitenancy(DefaultConfig);
+            _services.ActivateMultitenancy(DefaultConfig, (p) => null);
             Assert.NotEmpty(_services);
         }
 
@@ -82,6 +84,7 @@ namespace Centaurea.Multitenancy.Test
         [Fact]
         public async void ResolveTenantScopedService()
         {
+            IServiceProvider serviceProvider = null;
             string ya = "yahoo";
             _services.AddScoped<IFake, Fake>();
             _services.AddScoped<Fake>();
@@ -89,7 +92,8 @@ namespace Centaurea.Multitenancy.Test
             _services.AddScopedForTenant<IFake, TenantFake>(new TenantId(ya));
             Mock<IHttpContextAccessor> accessor = new Mock<IHttpContextAccessor>();
             _services.AddSingleton(accessor.Object);
-            IServiceProvider serviceProvider = _services.BuildMultitenantServiceProvider(GetTenantConfiguration(mapps: (ya, ya)));
+//            _services.AddSingleton<IServiceProvider>((p1) => serviceProvider);
+            serviceProvider = _services.BuildMultitenantServiceProvider(GetTenantConfiguration(mapps: (ya, ya)));
 
             await EmulateRequestExecution(accessor, "google.com", ya, ya);
             IFake service = serviceProvider.GetService<IFake>();
@@ -98,11 +102,14 @@ namespace Centaurea.Multitenancy.Test
 
             var fact = serviceProvider.GetService<IServiceScopeFactory>();
       
-            using(var scope = serviceProvider.CreateScope()){
+            using(var scope = serviceProvider.CreateScope())
+            {
+                Assert.Equal(typeof(MultitenantServiceScopeProxy), scope.GetType());
                 service = scope.ServiceProvider.GetService<IFake>();
                 Assert.Equal(typeof(Fake), service.GetType());
                 dep = scope.ServiceProvider.GetService<Dep>();
                 Assert.Equal(typeof(Fake), dep.Faked.GetType());
+                //Assert.Equal(typeof(MultitenantServiceProvider), dep.prov.GetType());
             }
 
             await EmulateRequestExecution(accessor, "yahoo.com", ya, "yahoo");
@@ -113,10 +120,10 @@ namespace Centaurea.Multitenancy.Test
                 Assert.NotNull(notOverridenByScopeService);
                 dep =  scope.ServiceProvider.GetService<Dep>();
                 Assert.Equal(typeof(TenantFake), dep.Faked.GetType());
-                Assert.Equal(typeof(CachedTenantResolver), dep.res.GetType());
 
                 using (var nestedScope = scope.ServiceProvider.CreateScope())
                 {
+                    Assert.Equal(typeof(MultitenantServiceScopeProxy), nestedScope.GetType());
                     service = nestedScope.ServiceProvider.GetService<IFake>();
                     Assert.Equal(typeof(TenantFake), service.GetType());
                 }

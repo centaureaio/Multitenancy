@@ -7,10 +7,15 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Centaurea.Multitenancy
 {
-    public class MultitenantServiceProvider : IServiceProvider, IServiceScopeFactory
-    {
+    internal static class TypeHelper{
         private static readonly Type _scopeFactoryType = typeof(IServiceScopeFactory);
+        private static readonly Type _serviceProviderType = typeof(IServiceProvider);
+        internal static bool IsServiceExcluded(Type serviceType) => serviceType == _scopeFactoryType || serviceType == _serviceProviderType;
+        internal static bool IsServiceProvider(Type serviceType) =>  serviceType == _serviceProviderType;
+    }
 
+    public class MultitenantServiceProvider : IMultitenantServiceProvider, IServiceScopeFactory
+    {
         private readonly ITenantResolver _tenantResolver;
 
         private readonly Dictionary<TenantId, IServiceProvider> _providers;
@@ -33,7 +38,7 @@ namespace Centaurea.Multitenancy
 
         public object GetService(Type serviceType)
         {
-            if (serviceType == _scopeFactoryType)
+            if (TypeHelper.IsServiceExcluded(serviceType))
             {
                 return this;
             }
@@ -43,9 +48,10 @@ namespace Centaurea.Multitenancy
                 : _providers[TenantId.DEFAULT_ID]).GetService(serviceType);
         }
 
-        internal static Dictionary<TenantId, IServiceCollection> InitProviderCollections(IServiceCollection services, MultitenancyConfiguration config)
+        internal static Dictionary<TenantId, IServiceCollection> InitProviderCollections(IServiceCollection services, MultitenancyConfiguration config, Func<IServiceProvider, 
+            IMultitenantServiceProvider> rootProviderGetter)
         {
-            services.ActivateMultitenancy(config);
+            services.ActivateMultitenancy(config, rootProviderGetter);
             Dictionary<TenantId, IServiceCollection> result = new Dictionary<TenantId, IServiceCollection>();
             IEnumerable<TenantedServiceDescriptor> tenantedServices = services.Where(d => d is TenantedServiceDescriptor td && !td.Tenant.Equals(TenantId.DEFAULT_ID))
                 .Cast<TenantedServiceDescriptor>().ToArray();
@@ -79,7 +85,7 @@ namespace Centaurea.Multitenancy
 
         public IServiceScope CreateScope()
         {
-            return GetTenantedProvider(_tenantResolver.Current).CreateScope();
+            return new MultitenantServiceScopeProxy(GetTenantedProvider(_tenantResolver.Current).CreateScope(), this);
         }
     }
 }
